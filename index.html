@@ -136,11 +136,6 @@ function baseVal(s,y){
 }
 function chartPoints(s){
   const pts=drawChartPts(s);
-  if(tgt26!=null){
-    const bv26=baseVal(s,2026);
-    const rate26=(bv26!=null && bv26!==0)? (tgt26/bv26*100).toFixed(1)+'%':'—';
-    tr+='<tr><td>2026（目標）</td><td class="num" style="color:#7a9ab5">'+fmt(tgt26)+'</td><td class="num">'+fmt(bv26)+'</td><td>'+rate26+'</td><td>—</td><td>前三年線性迴歸目標（虛線）</td></tr>';
-  }
   const fc=forecastVal(s);
   if(fc!=null) pts.push({y:2027, v:fc, scope:'forecast'});
   return pts;
@@ -230,6 +225,11 @@ function draw(){
     const rate=(v!=null && bv!=null && bv!==0)? (v/bv*100).toFixed(1)+'%':'—';
     tr+='<tr><td>'+y+'</td><td class="num">'+fmt(v)+'</td><td class="num">'+fmt(bv)+'</td><td>'+rate+'</td><td>'+ch+'</td><td>'+note+'</td></tr>';
   });
+  if(tgt26!=null){
+    const bv26=baseVal(s,2026);
+    const rate26=(bv26!=null && bv26!==0)? (tgt26/bv26*100).toFixed(1)+'%':'—';
+    tr+='<tr><td>2026（目標）</td><td class="num" style="color:#7a9ab5">'+fmt(tgt26)+'</td><td class="num">'+fmt(bv26)+'</td><td>'+rate26+'</td><td>—</td><td>前三年線性迴歸目標（虛線）</td></tr>';
+  }
   const fc=forecastVal(s);
   if(fc!=null){
     const v26=curVal(s,2026);
