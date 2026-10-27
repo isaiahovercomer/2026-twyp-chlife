@@ -49,6 +49,10 @@ strong{color:#3a2e22}
 <div><label>項目（依序：主日、受浸、家聚會、排聚會）</label></div>
 <div class="btnrow" id="metricRow" role="group" aria-label="項目"></div>
 
+<div><label>時間範圍</label></div>
+<div class="btnrow" id="rangeRow" role="group" aria-label="時間範圍"></div>
+<p class="small" id="rangeNote"></p>
+
 <p class="now" id="nowLine">載入中…</p>
 
 <div class="card">
@@ -73,12 +77,15 @@ strong{color:#3a2e22}
 <li>家聚會＝當週「家聚會受訪」＋「家聚會出訪」直接加總，缺列以 0 計。基宜區出訪缺列較多，該區家聚會數字宜與受訪單項對照看。</li>
 <li>排聚會＝「小排」。受浸：2023–2025 年為全年合計，2026 年僅計 1–10 月（11–12 月僅零星資料已排除，全年不宜直接與 2025 全年比較，比較請看 1–10 月同期）。2023–2024 年來源為 Drive「2-青年得一萬」總表；台北、新北照顧區 2023–2024 年有單獨數字，2025 年起受浸僅到大區層級，選照顧區時 2025 年起顯示所屬大區合計，圖上不連接以免誤讀；2023–2024 年基宜＋花東合計比總表合併數少 38／37 人（見資料檔附註），其餘區合計與全台一致。</li>
 <li>2024 年第 43 週前後來源不同（之前為從原始點名重算，之後為系統已結算彙總），驗證差異在個位數內；已結算數字之後補登不會自動更新。</li>
-<li>燈號判定：週出席以 2023→2025 年變化判定（增 ≥2% 綠燈、減 ≥10% 紅燈、其餘黃燈）；受浸（大區／全台）以 2023→2025 年全年變化判定（增 ≥5% 綠燈、減 ≥15% 紅燈、其餘黃燈），2026 年 1–10 月同期另列；受浸（照顧區）以 2023→2024 年照顧區變化判定（同上門檻），2025 年起口徑不同不計入燈號。基數小於 30 人時，燈號僅供參考。燈號是趨勢提醒，不是評價。</li>
+<li>時間範圍：圖表上方有「全年／1-X 月」切換，X 為上個月（今天是 10 月就是 1-9 月，11 月登入就變 1-10 月，1 月登入時 X 為 12 月即全年）。1-X 月模式下各年皆取同範圍同比；週出席以 ISO 週週四所在月份歸月，1-9 月每年皆 39 週，平均為該範圍內各週合計 ÷ 週數；受浸以月總表累計，2025 年起以系統月資料累計。</li><li>受浸缺月推估：2023、2024 年月總表缺的月份（2023 年 1、2、4、6、7、8 月，2024 年 1、2、3、5 月）以該單位前後月累計數字按時間比例推算，表格標示「推估」，不是實際結算；月總表以表頭月份為準，不以資料夾月份為準（例如 2023 年 6 月資料夾內那張表頭是 5 月，2024 年 4 月總表誤放在 2023 年 5 月資料夾）。Sheet1 單分頁的原始檔因與總表數字對不上（例如 2024 年 5 月原始檔合計低於 4 月總表），不直接當作月結算使用。</li><li>燈號判定：週出席以 2023→2025 年變化判定（增 ≥2% 綠燈、減 ≥10% 紅燈、其餘黃燈）；受浸（大區／全台）以 2023→2025 年變化判定（增 ≥5% 綠燈、減 ≥15% 紅燈、其餘黃燈），2026 年 1–10 月同期另列；受浸（照顧區）以 2023→2024 年變化判定（同上門檻），2025 年起口徑不同不計入燈號；1-X 月模式下燈號門檻相同，改用同範圍數字判定。基數小於 30 人時，燈號僅供參考。燈號是趨勢提醒，不是評價。</li>
 </ul>
 </div>
 </div>
 <script>
-let DATA=null, region='全台', age='teen', metric='sunday', UNIT_LABEL={};
+let DATA=null, region='全台', age='teen', metric='sunday', range='full', UNIT_LABEL={};
+function ytdMonth(){const d=new Date(); const m=d.getMonth()+1; return m===1?12:m-1;}
+function rangeLabel(){return range==='full'?'全年':'1-'+ytdMonth()+'月';}
+function isYtd(){return range==='ytd';}
 function regionLabel(){return UNIT_LABEL[region]||region;}
 const AGE_LABEL={teen:'青少年（13–18歲）',college:'大專（19–22歲）',young:'青職（23–35歲）'};
 const METRIC_LABEL={sunday:'主日',baptism:'受浸',home:'家聚會',smallgroup:'排聚會'};
@@ -87,10 +94,35 @@ function fmt(n){return n==null?'—':Math.round(n).toLocaleString('en-US')}
 function pct(a,b){if(!b||b===0) return null; return (a-b)/b*100}
 function pctText(p){if(p==null) return '—'; const s=p>=0?'+':'-'; return s+Math.abs(p).toFixed(1)+'%'}
 function series(){return DATA.data[region][age][metric]}
+function curVal(s,y){
+  if(!isYtd()) return s.values[String(y)];
+  if(metric==='baptism') return (s.monthly_cum||{})[String(y)] ? s.monthly_cum[String(y)][String(ytdMonth())] : null;
+  return (s.ytd_avg||{})[String(y)] ? s.ytd_avg[String(y)][String(ytdMonth())] : null;
+}
+function isEstBap(y){
+  if(metric!=='baptism' || !isYtd()) return false;
+  const est=(DATA.data[region][age][metric].estimated_months||{})[String(y)]||[];
+  return est.includes(ytdMonth());
+}
+function drawChartPts(s){
+  const isCareBap = metric==='baptism' && s.scope==='mixed';
+  const pts=YEARS.map(y=>({y, v:curVal(s,y), scope:(s.scope_by_year||{})[String(y)]}));
+  if(!isCareBap) return pts;
+  // care baptism: chart only care years (2023,2024); parent years shown as 大區合計 text, never connected
+  return pts.map(pp=>({...pp, v: pp.scope==='care' ? pp.v : null}));
+}
 function draw(){
   const s=series();
   const now=document.getElementById('nowLine');
-  now.textContent='目前顯示：'+regionLabel()+'｜'+AGE_LABEL[age]+'｜'+METRIC_LABEL[metric];
+  now.textContent='目前顯示：'+regionLabel()+'｜'+AGE_LABEL[age]+'｜'+METRIC_LABEL[metric]+'｜'+rangeLabel();
+  const rr=document.getElementById('rangeRow'); rr.innerHTML='';
+  [['full','全年'],['ytd','1-'+ytdMonth()+'月']].forEach(([k,lab])=>{const b=document.createElement('button'); b.textContent=lab; b.className=(k===range?'on':''); b.onclick=()=>{range=k; draw();}; rr.appendChild(b);});
+  const rn=document.getElementById('rangeNote');
+  if(isYtd()){
+    rn.textContent='1-'+ytdMonth()+'月：各年皆取同範圍同比。週出席以 ISO 週週四所在月份歸月（1-9月每年皆 39 週）；受浸以月總表累計，缺月按時間比例推估並在表格標示。2026 年資料僅至 10 月／第 43 週，X 超過 10 月時以 10 月值為準。';
+  } else {
+    rn.textContent='全年：2023–2025 年為全年，2026 年週為第 1–43 週平均、受浸為 1–10 月合計。';
+  }
   // age buttons
   const ar=document.getElementById('ageRow'); ar.innerHTML='';
   ['teen','college','young'].forEach(k=>{const b=document.createElement('button'); b.textContent=AGE_LABEL[k]; b.className=(k===age?'on':''); b.onclick=()=>{age=k; draw();}; ar.appendChild(b);});
@@ -98,8 +130,7 @@ function draw(){
   ['sunday','baptism','home','smallgroup'].forEach(k=>{const b=document.createElement('button'); b.textContent=METRIC_LABEL[k]; b.className=(k===metric?'on':''); b.onclick=()=>{metric=k; draw();}; mr.appendChild(b);});
   // chart
   const isCareBap = metric==='baptism' && s.scope==='mixed';
-  const pts=YEARS.map(y=>({y, v:s.values[String(y)], scope:(s.scope_by_year||{})[String(y)]}));
-  const chartPts = isCareBap ? pts.map(pp=>({...pp, v: pp.scope==='care' ? pp.v : null})) : pts;
+  const chartPts = drawChartPts(s);
   const vals=chartPts.filter(p=>p.v!=null).map(p=>p.v);
   const svg=document.getElementById('chart');
   const W=720,H=380,L=64,R=20,T=28,B=48, iw=W-L-R, ih=H-T-B;
@@ -110,7 +141,7 @@ function draw(){
   let html='';
   // grid + y labels (3 ticks)
   [mn,(mn+mx)/2,mx].forEach(v=>{const y=Y(v); html+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#eee6d2"/><text x="'+(L-8)+'" y="'+(y+4)+'" font-size="13" text-anchor="end" fill="#7a6a55">'+Math.round(v)+'</text>';});
-  YEARS.forEach((y,i)=>{html+='<text x="'+X(i)+'" y="'+(H-18)+'" font-size="14" text-anchor="middle" fill="#3a2e22">'+y+(y===2026?'（至43週）':'')+'</text>';});
+  YEARS.forEach((y,i)=>{html+='<text x="'+X(i)+'" y="'+(H-18)+'" font-size="14" text-anchor="middle" fill="#3a2e22">'+y+(y===2026 && !isYtd()?'（至43週）':'')+'</text>';});
   const avail=chartPts.filter(p=>p.v!=null);
   if(avail.length>=2){
     const d=avail.map((p,i)=> (i?'L':'M')+X(YEARS.indexOf(p.y)).toFixed(1)+' '+Y(p.v).toFixed(1)).join(' ');
@@ -119,22 +150,28 @@ function draw(){
   chartPts.forEach((p,i)=>{ if(p.v==null){ const lab=(metric==='baptism' && p.scope==='parent')?'大區合計':'無資料'; html+='<text x="'+X(i)+'" y="'+(T+ih/2)+'" font-size="13" text-anchor="middle" fill="#b23a2e">'+lab+'</text>'; return;}
     html+='<circle cx="'+X(i)+'" cy="'+Y(p.v)+'" r="6" fill="#a85a4e" stroke="#fff" stroke-width="2"/><text x="'+X(i)+'" y="'+(Y(p.v)-12)+'" font-size="14" font-weight="700" text-anchor="middle" fill="#3a2e22">'+fmt(p.v)+'</text>';});
   svg.innerHTML=html;
-  document.getElementById('chartNote').textContent = metric==='baptism'
-    ? (isCareBap ? '受浸單位：人／年。2023–2024 年為該照顧區單獨數字；2025 年起僅大區層級，圖上不連接大區合計，以免誤讀為照顧區數字，表格另列大區合計。' : '受浸單位：人／年。2023–2025 年為全年合計；2026 年為 1–10 月合計，不是全年。')
-    : '單位：人／週（年平均）。2026 年為第 1–43 週平均，第 44 週因未結算已排除。';
+  document.getElementById('chartNote').textContent = isYtd()
+    ? (metric==='baptism'
+        ? (isCareBap ? '受浸單位：人（1-'+ytdMonth()+'月累計）。2023–2024 年為該照顧區單獨數字；2025 年起僅大區層級，圖上不連接大區合計，表格另列。' : '受浸單位：人（1-'+ytdMonth()+'月累計）。2023–2024 年缺月為推估，表格標示。')
+        : '單位：人／週（1-'+ytdMonth()+'月平均，ISO 週週四歸月）。2026 年僅至第 43 週。')
+    : (metric==='baptism'
+        ? (isCareBap ? '受浸單位：人／年。2023–2024 年為該照顧區單獨數字；2025 年起僅大區層級，圖上不連接大區合計，以免誤讀為照顧區數字，表格另列大區合計。' : '受浸單位：人／年。2023–2025 年為全年合計；2026 年為 1–10 月合計，不是全年。')
+        : '單位：人／週（年平均）。2026 年為第 1–43 週平均，第 44 週因未結算已排除。');
   // table
   let tr='<tr><th>年份</th><th class="num">數值</th><th>較前一年</th><th>備註</th></tr>';
   YEARS.forEach((y,i)=>{
-    const v=s.values[String(y)];
-    const prev=i? s.values[String(YEARS[i-1])] : null;
+    const v=curVal(s,y);
+    const prev=i? curVal(s,YEARS[i-1]) : null;
     let ch=(v!=null && prev!=null)? pctText(pct(v,prev)) : '—';
-    if(metric==='baptism' && y===2026) ch='—';
+    if(!isYtd() && metric==='baptism' && y===2026) ch='—';
     if(isCareBap && y===2025) ch='—';
     let note='';
     if(metric==='baptism' && isCareBap && y>=2025) note='大區合計（非本區）';
     if(metric==='baptism' && isCareBap && y<2025) note='照顧區單獨數字';
-    if(metric==='baptism' && !isCareBap && y===2026) note='僅 1–10 月';
-    if(metric!=='baptism' && y===2026) note='第 1–43 週平均';
+    if(metric==='baptism' && !isCareBap && !isYtd() && y===2026) note='僅 1–10 月';
+    if(metric!=='baptism' && !isYtd() && y===2026) note='第 1–43 週平均';
+    if(isYtd() && isEstBap(y)) note=(note?note+'；':'')+'推估（前後月按時間比例）';
+    if(isYtd() && y===2026 && ytdMonth()>10) note=(note?note+'；':'')+'資料僅至 10 月／第 43 週';
     tr+='<tr><td>'+y+'</td><td class="num">'+fmt(v)+'</td><td>'+ch+'</td><td>'+note+'</td></tr>';
   });
   document.getElementById('yearTable').innerHTML=tr;
@@ -142,7 +179,22 @@ function draw(){
   const card=document.getElementById('summaryCard');
   let light='yellow', lightText='黃燈：宜留意', trendPct=null, trendDesc='';
   let body='';
-  if(metric==='baptism'){
+  if(isYtd()){
+    const X=ytdMonth();
+    if(metric==='baptism' && isCareBap){
+      trendPct=pct(curVal(s,2024), curVal(s,2023));
+      if(trendPct!=null){ if(trendPct>=5){light='green';lightText='綠燈：趨勢向上';} else if(trendPct<=-15){light='red';lightText='紅燈：明顯下滑';} }
+      body='<p>'+regionLabel()+' '+AGE_LABEL[age]+' 受浸（1-'+X+'月累計，照顧區單獨數字）：2023 年 '+fmt(curVal(s,2023))+' 人，2024 年 '+fmt(curVal(s,2024))+' 人，變化 '+pctText(trendPct)+'。</p><p>2025 年起僅大區層級：2025 年 1-'+X+'月大區合計 '+fmt(curVal(s,2025))+' 人，2026 年 1-'+X+'月大區合計 '+fmt(curVal(s,2026))+' 人（皆非本照顧區單獨數字，口徑不同，不計入燈號）。</p>';
+    } else if(metric==='baptism'){
+      trendPct=pct(curVal(s,2025), curVal(s,2023));
+      if(trendPct!=null){ if(trendPct>=5){light='green';lightText='綠燈：趨勢向上';} else if(trendPct<=-15){light='red';lightText='紅燈：明顯下滑';} }
+      body='<p>'+regionLabel()+' '+AGE_LABEL[age]+' 受浸（1-'+X+'月累計）：2023 年 '+fmt(curVal(s,2023))+' 人，2025 年 '+fmt(curVal(s,2025))+' 人，兩年變化 '+pctText(trendPct)+'；2026 年 1-'+X+'月 '+fmt(curVal(s,2026))+' 人，較 2025 年同期變化 '+pctText(pct(curVal(s,2026),curVal(s,2025)))+'。</p>';
+    } else {
+      trendPct=pct(curVal(s,2025), curVal(s,2023));
+      if(trendPct!=null){ if(trendPct>=2){light='green';lightText='綠燈：趨勢向上';} else if(trendPct<=-10){light='red';lightText='紅燈：明顯下滑';} }
+      body='<p>'+regionLabel()+' '+AGE_LABEL[age]+' '+METRIC_LABEL[metric]+'（1-'+X+'月平均每週）：2023 年 '+fmt(curVal(s,2023))+' 人，2025 年 '+fmt(curVal(s,2025))+' 人，兩年變化 '+pctText(trendPct)+'；2026 年 1-'+X+'月平均每週 '+fmt(curVal(s,2026))+' 人，較 2025 年同期變化 '+pctText(pct(curVal(s,2026),curVal(s,2025)))+'。</p>';
+    }
+  } else if(metric==='baptism'){
     if(isCareBap){
       trendPct=pct(s.values['2024'], s.values['2023']);
       if(trendPct!=null){ if(trendPct>=5){light='green';lightText='綠燈：趨勢向上';} else if(trendPct<=-15){light='red';lightText='紅燈：明顯下滑';} }
@@ -164,7 +216,7 @@ function draw(){
   if(light==='green') advice='趨勢向上，宜持續培育與留住這個年齡層。';
   else if(light==='red') advice = metric==='baptism' ? '受浸明顯減少，宜優先加強福音出訪與新人牧養跟進。' : '趨勢明顯下滑，宜優先關心留人與家聚會跟進。';
   else advice='趨勢大致持平，宜留意後續變化，避免由平轉降。';
-  if(s.values['2023']!=null && s.values['2023']<30) advice+='（基數小於 30 人，燈號僅供參考。）';
+  if(curVal(s,2023)!=null && curVal(s,2023)<30) advice+='（基數小於 30 人，燈號僅供參考。）';
   card.className='card summary '+light;
   card.innerHTML='<p><span class="dot"></span><strong>'+lightText+'</strong></p>'+body+'<p><strong>'+advice+'</strong></p><p class="small">燈號判定見下方口徑附註。</p>';
 }
@@ -174,10 +226,10 @@ document.getElementById('shot').onclick=function(){
   const x=c.getContext('2d');
   x.fillStyle='#fdf8ef'; x.fillRect(0,0,900,800);
   x.fillStyle='#3a2e22'; x.font='700 34px sans-serif'; x.fillText('全臺青少年聚會人數統計',40,58);
-  x.font='20px sans-serif'; x.fillText(regionLabel()+'｜'+AGE_LABEL[age]+'｜'+METRIC_LABEL[metric],40,96);
+  x.font='20px sans-serif'; x.fillText(regionLabel()+'｜'+AGE_LABEL[age]+'｜'+METRIC_LABEL[metric]+'｜'+rangeLabel(),40,96);
   // chart area
   const L=80,R=40,T=150,B=520, iw=900-L-R, ih=380;
-  const pts=YEARS.map(y=>({y,v:s.values[String(y)]})).filter(p=>p.v!=null);
+  const pts=drawChartPts(s).filter(p=>p.v!=null);
   const vals=pts.map(p=>p.v); let mn=Math.min(...vals), mx=Math.max(...vals); const pad=(mx-mn)*0.18||10; mn=Math.max(0,mn-pad); mx=mx+pad;
   const X=i=>L+iw*i/3, Y=v=>T+ih-(v-mn)/(mx-mn)*ih;
   x.strokeStyle='#e6dcc6'; x.beginPath(); x.moveTo(L,T); x.lineTo(L,T+ih); x.lineTo(L+iw,T+ih); x.stroke();
