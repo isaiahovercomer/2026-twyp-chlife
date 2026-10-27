@@ -3,41 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>全臺青少年聚會人數統計（2023–2026）</title>
+<title>全臺青年聚會與受浸人數統計（2023–2026）</title>
 <style>
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:#fdf8ef;color:#3a2e22;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}
+body{margin:0;background:#eef5fb;color:#1e3a52;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}
 .wrap{min-height:100vh;min-height:100dvh;max-width:860px;margin:0 auto;padding:20px 16px 40px}
 h1{font-size:30px;line-height:1.3;margin:8px 0 4px}
-.sub{font-size:13px;color:#7a6a55;margin:0 0 16px}
+.sub{font-size:13px;color:#5f7d95;margin:0 0 16px}
 label{font-weight:700}
-select{width:100%;font-size:17px;font-weight:700;padding:10px 12px;margin:6px 0 14px;border:1.5px solid #c9b896;border-radius:10px;background:#fff;color:#3a2e22}
+select{width:100%;font-size:17px;font-weight:700;padding:10px 12px;margin:6px 0 14px;border:1.5px solid #b9d2e6;border-radius:10px;background:#fff;color:#1e3a52}
 .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
-.btnrow button{border:1.5px solid #c9b896;background:#fff;color:#3a2e22;border-radius:999px;padding:8px 14px;font-size:15px;cursor:pointer}
-.btnrow button.on{background:#5b4632;color:#fff;border-color:#5b4632;font-weight:700}
+.btnrow button{border:1.5px solid #b9d2e6;background:#fff;color:#1e3a52;border-radius:999px;padding:8px 14px;font-size:15px;cursor:pointer}
+.btnrow button.on{background:#2f6da3;color:#fff;border-color:#2f6da3;font-weight:700}
 .now{font-size:14px;font-weight:700;margin:10px 0}
-.card{background:#fff;border:1px solid #e6dcc6;border-radius:14px;padding:14px 16px;margin:14px 0}
+.card{background:#fff;border:1px solid #d3e3f0;border-radius:14px;padding:14px 16px;margin:14px 0}
 #chart{width:100%;height:auto;display:block}
 table{width:100%;border-collapse:collapse;font-size:15px}
-th,td{border-bottom:1px solid #eee6d2;padding:7px 6px;text-align:left}
+th,td{border-bottom:1px solid #dbe9f3;padding:7px 6px;text-align:left}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .shotrow{display:flex;justify-content:flex-end;margin:14px 0}
-#shot{background:#5b4632;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
-.summary{border-left:8px solid #d9a441;background:#fff8e6}
+#shot{background:#2f6da3;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
+.summary{border-left:8px solid #7fb3d5;background:#eef6fb}
 .summary.green{border-color:#2e7d4f;background:#eef7f0}
 .summary.red{border-color:#b23a2e;background:#fdeeee}
 .dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-1px;margin-right:6px;background:#d9a441}
 .summary.green .dot{background:#2e7d4f}.summary.red .dot{background:#b23a2e}
 .summary p{margin:6px 0}
-.small{font-size:13px;color:#7a6a55}
-strong{color:#3a2e22}
+.small{font-size:13px;color:#5f7d95}
+strong{color:#1e3a52}
 @media(max-width:560px){h1{font-size:24px}.wrap{padding:16px 12px 32px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>全臺青少年聚會人數統計</h1>
+<h1>全臺青年聚會與受浸人數統計</h1>
 <p class="sub">2023–2026 年｜資料來源：召會生活統計系統匯出 2026-10-27（照顧區層級）｜週資料取至 2026 年第 43 週｜受浸取至 2026 年 10 月</p>
 
 <label for="region">地區</label>
@@ -140,15 +140,15 @@ function draw(){
   const X=i=>L+iw*i/(YEARS.length-1), Y=v=>T+ih-(v-mn)/(mx-mn)*ih;
   let html='';
   // grid + y labels (3 ticks)
-  [mn,(mn+mx)/2,mx].forEach(v=>{const y=Y(v); html+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#eee6d2"/><text x="'+(L-8)+'" y="'+(y+4)+'" font-size="13" text-anchor="end" fill="#7a6a55">'+Math.round(v)+'</text>';});
-  YEARS.forEach((y,i)=>{html+='<text x="'+X(i)+'" y="'+(H-18)+'" font-size="14" text-anchor="middle" fill="#3a2e22">'+y+(y===2026 && !isYtd()?'（至43週）':'')+'</text>';});
+  [mn,(mn+mx)/2,mx].forEach(v=>{const y=Y(v); html+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#dbe9f3"/><text x="'+(L-8)+'" y="'+(y+4)+'" font-size="13" text-anchor="end" fill="#5f7d95">'+Math.round(v)+'</text>';});
+  YEARS.forEach((y,i)=>{html+='<text x="'+X(i)+'" y="'+(H-18)+'" font-size="14" text-anchor="middle" fill="#1e3a52">'+y+(y===2026 && !isYtd()?'（至43週）':'')+'</text>';});
   const avail=chartPts.filter(p=>p.v!=null);
   if(avail.length>=2){
     const d=avail.map((p,i)=> (i?'L':'M')+X(YEARS.indexOf(p.y)).toFixed(1)+' '+Y(p.v).toFixed(1)).join(' ');
-    html+='<path d="'+d+'" fill="none" stroke="#5b4632" stroke-width="3" stroke-linejoin="round"/>';
+    html+='<path d="'+d+'" fill="none" stroke="#2f6da3" stroke-width="3" stroke-linejoin="round"/>';
   }
   chartPts.forEach((p,i)=>{ if(p.v==null){ const lab=(metric==='baptism' && p.scope==='parent')?'大區合計':'無資料'; html+='<text x="'+X(i)+'" y="'+(T+ih/2)+'" font-size="13" text-anchor="middle" fill="#b23a2e">'+lab+'</text>'; return;}
-    html+='<circle cx="'+X(i)+'" cy="'+Y(p.v)+'" r="6" fill="#a85a4e" stroke="#fff" stroke-width="2"/><text x="'+X(i)+'" y="'+(Y(p.v)-12)+'" font-size="14" font-weight="700" text-anchor="middle" fill="#3a2e22">'+fmt(p.v)+'</text>';});
+    html+='<circle cx="'+X(i)+'" cy="'+Y(p.v)+'" r="6" fill="#4a90c2" stroke="#fff" stroke-width="2"/><text x="'+X(i)+'" y="'+(Y(p.v)-12)+'" font-size="14" font-weight="700" text-anchor="middle" fill="#1e3a52">'+fmt(p.v)+'</text>';});
   svg.innerHTML=html;
   document.getElementById('chartNote').textContent = isYtd()
     ? (metric==='baptism'
@@ -224,24 +224,24 @@ document.getElementById('shot').onclick=function(){
   const s=series();
   const c=document.createElement('canvas'); c.width=900; c.height=800;
   const x=c.getContext('2d');
-  x.fillStyle='#fdf8ef'; x.fillRect(0,0,900,800);
-  x.fillStyle='#3a2e22'; x.font='700 34px sans-serif'; x.fillText('全臺青少年聚會人數統計',40,58);
+  x.fillStyle='#eef5fb'; x.fillRect(0,0,900,800);
+  x.fillStyle='#1e3a52'; x.font='700 34px sans-serif'; x.fillText('全臺青年聚會與受浸人數統計',40,58);
   x.font='20px sans-serif'; x.fillText(regionLabel()+'｜'+AGE_LABEL[age]+'｜'+METRIC_LABEL[metric]+'｜'+rangeLabel(),40,96);
   // chart area
   const L=80,R=40,T=150,B=520, iw=900-L-R, ih=380;
   const pts=drawChartPts(s).filter(p=>p.v!=null);
   const vals=pts.map(p=>p.v); let mn=Math.min(...vals), mx=Math.max(...vals); const pad=(mx-mn)*0.18||10; mn=Math.max(0,mn-pad); mx=mx+pad;
   const X=i=>L+iw*i/3, Y=v=>T+ih-(v-mn)/(mx-mn)*ih;
-  x.strokeStyle='#e6dcc6'; x.beginPath(); x.moveTo(L,T); x.lineTo(L,T+ih); x.lineTo(L+iw,T+ih); x.stroke();
-  x.strokeStyle='#5b4632'; x.lineWidth=3; x.beginPath();
+  x.strokeStyle='#d3e3f0'; x.beginPath(); x.moveTo(L,T); x.lineTo(L,T+ih); x.lineTo(L+iw,T+ih); x.stroke();
+  x.strokeStyle='#2f6da3'; x.lineWidth=3; x.beginPath();
   pts.forEach((p,i)=>{const xi=X(YEARS.indexOf(p.y)), yi=Y(p.v); if(i) x.lineTo(xi,yi); else x.moveTo(xi,yi);});
   x.stroke(); x.lineWidth=1;
-  pts.forEach(p=>{const xi=X(YEARS.indexOf(p.y)), yi=Y(p.v); x.fillStyle='#a85a4e'; x.beginPath(); x.arc(xi,yi,7,0,Math.PI*2); x.fill(); x.fillStyle='#3a2e22'; x.font='700 20px sans-serif'; x.textAlign='center'; x.fillText(fmt(p.v),xi,yi-14); x.font='18px sans-serif'; x.fillText(String(p.y),xi,T+ih+30);});
+  pts.forEach(p=>{const xi=X(YEARS.indexOf(p.y)), yi=Y(p.v); x.fillStyle='#4a90c2'; x.beginPath(); x.arc(xi,yi,7,0,Math.PI*2); x.fill(); x.fillStyle='#1e3a52'; x.font='700 20px sans-serif'; x.textAlign='center'; x.fillText(fmt(p.v),xi,yi-14); x.font='18px sans-serif'; x.fillText(String(p.y),xi,T+ih+30);});
   x.textAlign='left';
   // summary text (plain, wrapped roughly)
   const card=document.getElementById('summaryCard');
   const txt=card.innerText.replace(/\n+/g,' ');
-  x.font='19px sans-serif'; x.fillStyle='#3a2e22';
+  x.font='19px sans-serif'; x.fillStyle='#1e3a52';
   let line='', yy=580;
   // only first ~180 chars to fit one line area, plus second line if needed
   const words=txt.split(''); let cur='';
