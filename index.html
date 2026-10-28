@@ -164,7 +164,9 @@ function draw(){
   const isCareBap = metric==='baptism' && s.scope==='mixed';
   const chartPts = chartPoints(s);
   const tgt26=target2026Val(s);
-  const vals=chartPts.filter(p=>p.v!=null).map(p=>p.v).concat(tgt26!=null?[tgt26]:[]);
+  // per-year base (weekly) / target (baptism), same values as the table's 基數／目標 column
+  const basePts=YEARS.map(y=>({y, v:baseVal(s,y)}));
+  const vals=chartPts.filter(p=>p.v!=null).map(p=>p.v).concat(tgt26!=null?[tgt26]:[]).concat(basePts.filter(b=>b.v!=null).map(b=>b.v));
   const svg=document.getElementById('chart');
   const W=720,H=380,L=64,R=20,T=28,B=48, iw=W-L-R, ih=H-T-B;
   let mn=Math.min(...vals), mx=Math.max(...vals);
@@ -187,6 +189,31 @@ function draw(){
     const last=actual[actual.length-1];
     html+='<path d="M'+X(YEARS.indexOf(last.y)).toFixed(1)+' '+Y(last.v).toFixed(1)+' L'+X(4).toFixed(1)+' '+Y(fcPt.v).toFixed(1)+'" fill="none" stroke="#8ab4d0" stroke-width="3" stroke-dasharray="6 4" stroke-linejoin="round"/>';
   }
+  // per-year base/target series: light grey dashed line + hollow points.
+  // Labels sit on the far side of the actual point (above when base is
+  // higher, below when lower); if that would land within 28px of the
+  // actual label, flip to the other side. The 2026 base label goes to
+  // the right of its point, because the 2026 x-position already carries
+  // the actual + regression-target pair labels.
+  const baseAvail=basePts.filter(b=>b.v!=null);
+  if(baseAvail.length>=2){
+    const d=baseAvail.map((b,i)=> (i?'L':'M')+X(YEARS.indexOf(b.y)).toFixed(1)+' '+Y(b.v).toFixed(1)).join(' ');
+    html+='<path d="'+d+'" fill="none" stroke="#9ab0c3" stroke-width="2" stroke-dasharray="4 3" stroke-linejoin="round"/>';
+  }
+  baseAvail.forEach(b=>{
+    const xi=X(YEARS.indexOf(b.y)), yi=Y(b.v);
+    html+='<circle cx="'+xi+'" cy="'+yi+'" r="5" fill="#fff" stroke="#8a9ba8" stroke-width="2"/>';
+    const av=curVal(s,b.y);
+    if(b.y===2026){
+      html+='<text x="'+(xi+10)+'" y="'+(yi+5)+'" font-size="13" font-weight="700" text-anchor="start" fill="#7a8fa3">'+fmt(b.v)+'</text>';
+    } else if(av==null){
+      html+='<text x="'+xi+'" y="'+(yi-11)+'" font-size="13" font-weight="700" text-anchor="middle" fill="#7a8fa3">'+fmt(b.v)+'</text>';
+    } else {
+      let ly = b.v>=av ? yi-11 : yi+23;
+      if(Math.abs(ly-(Y(av)-12))<28) ly = b.v>=av ? yi+23 : yi-11;
+      html+='<text x="'+xi+'" y="'+ly+'" font-size="13" font-weight="700" text-anchor="middle" fill="#7a8fa3">'+fmt(b.v)+'</text>';
+    }
+  });
   // 2026 target: only the vertical dashed connector to actual 2026 (the old dashed 2025->target segment overlapped the solid 2025->2026 segment when target and actual were close, e.g. 2353 vs 2350)
   if(tgt26!=null){
     const a25=actual.find(pp=>pp.y===2025), a26=actual.find(pp=>pp.y===2026);
@@ -219,6 +246,7 @@ function draw(){
     : (metric==='baptism'
         ? (isCareBap ? '受浸單位：人／年。2023–2024 年為該照顧區單獨數字；2025 年起僅大區層級，圖上不連接大區合計，以免誤讀為照顧區數字，表格另列大區合計。' : '受浸單位：人／年。2023–2025 年為全年合計；2026 年大區為 1–10 月合計、照顧區為 1–8 月合計，不是全年。')
         : '單位：人／週（年平均）。2026 年為第 1–43 週平均，第 44 週因未結算已排除。');
+  if(baseAvail.length) document.getElementById('chartNote').textContent += ' 灰色虛線空心點為當年'+(metric==='baptism'?'目標':'基數')+'（與表格基數／目標欄同值）。';
   // table
   let tr='<tr><th>年份</th><th class="num">數值</th><th class="num">基數／目標</th><th>達成率</th><th>較前一年</th><th>備註</th></tr>';
   YEARS.forEach((y,i)=>{
@@ -321,7 +349,8 @@ document.getElementById('shot').onclick=function(){
   // chart area
   const L=80,R=40,T=150,B=520, iw=900-L-R, ih=380;
   const pts=chartPoints(s).filter(p=>p.v!=null);
-  const vals=pts.map(p=>p.v); let mn=Math.min(...vals), mx=Math.max(...vals); const pad=(mx-mn)*0.18||10; mn=Math.max(0,mn-pad); mx=mx+pad;
+  const baseShot=YEARS.map(y=>({y, v:baseVal(s,y)})).filter(b=>b.v!=null);
+  const vals=pts.map(p=>p.v).concat(baseShot.map(b=>b.v)); let mn=Math.min(...vals), mx=Math.max(...vals); const pad=(mx-mn)*0.18||10; mn=Math.max(0,mn-pad); mx=mx+pad;
   const XI=p=>p.y===2027?4:YEARS.indexOf(p.y);
   const X=i=>L+iw*i/4, Y=v=>T+ih-(v-mn)/(mx-mn)*ih;
   x.strokeStyle='#d3e3f0'; x.beginPath(); x.moveTo(L,T); x.lineTo(L,T+ih); x.lineTo(L+iw,T+ih); x.stroke();
@@ -330,6 +359,11 @@ document.getElementById('shot').onclick=function(){
   actualS.forEach((p,i)=>{const xi=X(XI(p)), yi=Y(p.v); if(i) x.lineTo(xi,yi); else x.moveTo(xi,yi);});
   x.stroke();
   if(fcS && actualS.length){ x.strokeStyle='#8ab4d0'; x.setLineDash([6,4]); x.beginPath(); const last=actualS[actualS.length-1]; x.moveTo(X(XI(last)),Y(last.v)); x.lineTo(X(4),Y(fcS.v)); x.stroke(); x.setLineDash([]); }
+  if(baseShot.length>=2){
+    x.strokeStyle='#9ab0c3'; x.lineWidth=2; x.setLineDash([4,3]); x.beginPath();
+    baseShot.forEach((b,i)=>{const xi=X(YEARS.indexOf(b.y)), yi=Y(b.v); if(i) x.lineTo(xi,yi); else x.moveTo(xi,yi);});
+    x.stroke(); x.setLineDash([]);
+  }
   x.lineWidth=1;
   pts.forEach(p=>{const xi=X(XI(p)), yi=Y(p.v); if(p.y===2027){ x.fillStyle='#d3e3f0'; x.beginPath(); x.arc(xi,yi,7,0,Math.PI*2); x.fill(); x.strokeStyle='#7fb3d5'; x.stroke(); x.fillStyle='#7a9ab5'; } else { x.fillStyle='#4a90c2'; x.beginPath(); x.arc(xi,yi,7,0,Math.PI*2); x.fill(); x.fillStyle='#1e3a52'; } x.font='700 20px sans-serif'; x.textAlign='center'; if(!(p.y===2026 && target2026Val(s)!=null)) x.fillText(fmt(p.v),xi,yi-14); x.font='18px sans-serif'; x.fillText(p.y===2027?'2027（預估）':String(p.y),xi,T+ih+30);});
   const tgtShot=target2026Val(s), a26Shot=curVal(s,2026);
@@ -340,6 +374,15 @@ document.getElementById('shot').onclick=function(){
     if(tgtShot>=a26Shot){ x.fillStyle='#7a9ab5'; x.fillText(fmt(tgtShot),X(3),Y(tgtShot)-14); x.fillStyle='#1e3a52'; x.fillText(fmt(a26Shot),X(3),Y(a26Shot)+30); }
     else { x.fillStyle='#1e3a52'; x.fillText(fmt(a26Shot),X(3),Y(a26Shot)-14); x.fillStyle='#7a9ab5'; x.fillText(fmt(tgtShot),X(3),Y(tgtShot)+30); }
   }
+  baseShot.forEach(b=>{
+    const xi=X(YEARS.indexOf(b.y)), yi=Y(b.v);
+    x.fillStyle='#fff'; x.beginPath(); x.arc(xi,yi,7,0,Math.PI*2); x.fill(); x.strokeStyle='#8a9ba8'; x.stroke();
+    x.font='700 20px sans-serif'; x.fillStyle='#7a8fa3';
+    const av=curVal(s,b.y);
+    if(b.y===2026){ x.textAlign='left'; x.fillText(fmt(b.v),xi+12,yi+7); x.textAlign='center'; }
+    else if(av==null){ x.textAlign='center'; x.fillText(fmt(b.v),xi,yi-14); }
+    else { let ly = b.v>=av ? yi-14 : yi+30; if(Math.abs(ly-(Y(av)-14))<28) ly = b.v>=av ? yi+30 : yi-14; x.textAlign='center'; x.fillText(fmt(b.v),xi,ly); }
+  });
   x.textAlign='left';
   // summary text (plain, wrapped roughly)
   const card=document.getElementById('summaryCard');
