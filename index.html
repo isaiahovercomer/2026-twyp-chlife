@@ -92,7 +92,7 @@ function ytdMonth(){const d=new Date(); const m=d.getMonth()+1; return m===1?12:
 function rangeLabel(){return range==='custom' ? customStart+'–'+customEnd+'月' : range==='full'?'全年':'1-'+ytdMonth()+'月';}
 function isYtd(){return range==='ytd';}
 function regionLabel(){return UNIT_LABEL[region]||region;}
-const AGE_LABEL={teen:'青少年（13–18歲）',college:'大專（19–22歲）',young:'青職（23–35歲）',child:'兒童（0–12歲）'};
+const AGE_LABEL={child:'兒童（0–12歲）',teen:'青少年（13–18歲）',college:'大專（19–22歲）',young:'青職（23–35歲）'};
 const METRIC_LABEL={sunday:'主日',baptism:'受浸',home:'家聚會',smallgroup:'排聚會',churchlife:'召會生活'};
 const AGE_STYLE={teen:{line:'#2f6da3',point:'#4a90c2',fc:'#8ab4d0',tgt:'#a8c0d8',btn:'#2f6da3',pale:'#dbe9f3',name:'藍'},
  college:{line:'#357a78',point:'#5c9a97',fc:'#8ab8b5',tgt:'#a8c0bd',btn:'#357a78',pale:'#d8e8e7',name:'青綠'},
@@ -224,7 +224,7 @@ function draw(){
   }
   // age buttons
   const ar=document.getElementById('ageRow'); ar.innerHTML='';
-  ['teen','college','young','child'].forEach(k=>{const b=document.createElement('button'); b.textContent=AGE_LABEL[k]; b.className=(k===age?'on':''); const st=AGE_STYLE[k]; if(k===age){b.style.background=st.btn; b.style.color='#fff'; b.style.borderColor=st.btn;} else {b.style.background=st.pale; b.style.borderColor=st.btn;} b.onclick=()=>{age=k; draw();}; ar.appendChild(b);});
+  ['child','teen','college','young'].forEach(k=>{const b=document.createElement('button'); b.textContent=AGE_LABEL[k]; b.className=(k===age?'on':''); const st=AGE_STYLE[k]; if(k===age){b.style.background=st.btn; b.style.color='#fff'; b.style.borderColor=st.btn;} else {b.style.background=st.pale; b.style.borderColor=st.btn;} b.onclick=()=>{age=k; draw();}; ar.appendChild(b);});
   const mr=document.getElementById('metricRow'); mr.innerHTML='';
   (age==='child' ? ['sunday','home','churchlife'] : ['sunday','baptism','home','smallgroup']).forEach(k=>{const b=document.createElement('button'); b.textContent=METRIC_LABEL[k]; b.className=(k===metric?'on':''); const st=METRIC_STYLE[k]; if(k===metric){b.style.background=st.btn; b.style.color='#fff'; b.style.borderColor=st.btn;} else {b.style.background=st.pale; b.style.borderColor=st.btn;} b.onclick=()=>{metric=k; draw();}; mr.appendChild(b);});
   // chart
