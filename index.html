@@ -23,6 +23,22 @@ table{width:100%;border-collapse:collapse;font-size:15px}
 th,td{border-bottom:1px solid #dbe9f3;padding:7px 6px;text-align:left}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .shotrow{display:flex;justify-content:flex-end;margin:14px 0}
+.headrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.headrow h1{flex:1}
+#tourBtn{flex:none;margin-top:12px;border:1.5px solid #2f6da3;background:#fff;color:#2f6da3;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+#tourBlock{position:fixed;inset:0;z-index:9998;display:none}
+#tourSpot{position:fixed;z-index:9999;border:3px solid #d9a441;border-radius:12px;box-shadow:0 0 0 9999px rgba(20,40,60,.55);display:none;pointer-events:none}
+#tourTip{position:fixed;z-index:10000;width:min(340px,calc(100vw - 32px));background:#1e3a52;color:#fff;border-radius:14px;padding:16px 18px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#tourTip h3{margin:0 0 6px;font-size:17px;color:#f2c94c}
+#tourTip p{margin:0;font-size:15px;line-height:1.6;color:#eaf2f8}
+#tourProg{position:absolute;top:10px;right:14px;font-size:12px;color:#9db8cc}
+#tourBtns{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+#tourSkip{background:none;border:0;color:#b9d2e6;font-size:14px;cursor:pointer;padding:6px 2px}
+#tourNav{display:flex;gap:8px}
+#tourPrev,#tourNext{border-radius:999px;padding:8px 16px;font-size:15px;font-weight:700;cursor:pointer}
+#tourPrev{background:transparent;border:1.5px solid #f2c94c;color:#f2c94c}
+#tourPrev:disabled{opacity:.35;cursor:default}
+#tourNext{background:#f2c94c;border:1.5px solid #f2c94c;color:#1e3a52}
 #shot{background:#2f6da3;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
  .summary{border-left:8px solid #d9a441;background:#fdf3d7}
 .summary.green{border-color:#2e7d4f;background:#d3ecd9}
@@ -40,7 +56,7 @@ strong{color:#1e3a52}
 </head>
 <body>
 <div class="wrap">
-<h1>全臺青年聚會與受浸人數統計</h1>
+<div class="headrow"><h1>全臺青年聚會與受浸人數統計</h1><button id="tourBtn" type="button">使用教學</button></div>
 <p class="sub">2023–2026 年｜資料來源：召會生活統計系統匯出 2026-10-27（照顧區層級）｜週資料取至 2026 年第 43 週｜受浸取至 2026 年 10 月</p>
 
 <label for="region">地區</label>
@@ -86,6 +102,9 @@ strong{color:#1e3a52}
 </ul>
 </details>
 </div>
+<div id="tourBlock"></div>
+<div id="tourSpot"></div>
+<div id="tourTip" role="dialog" aria-label="使用教學"><span id="tourProg"></span><h3 id="tourTitle"></h3><p id="tourText"></p><div id="tourBtns"><button id="tourSkip" type="button">跳過</button><span id="tourNav"><button id="tourPrev" type="button">上一步</button><button id="tourNext" type="button">下一步</button></span></div></div>
 <script>
 let DATA=null, region='全台', age='teen', metric='sunday', range='full', customStart=1, customEnd=ytdMonth(), UNIT_LABEL={};
 function ytdMonth(){const d=new Date(); const m=d.getMonth()+1; return m===1?12:m-1;}
@@ -502,7 +521,70 @@ fetch('twyp-data.json').then(r=>r.json()).then(j=>{
   j.meta.units.forEach(u=>{UNIT_LABEL[u.id]=u.label; const o=document.createElement('option'); o.value=u.id; o.textContent=u.label; sel.appendChild(o);});
   sel.value='全台'; sel.onchange=()=>{region=sel.value; draw();};
   draw();
+  setTimeout(()=>{ if(!tourSeen()) tourStart(false); }, 600);
 }).catch(e=>{document.getElementById('nowLine').textContent='資料載入失敗，請確認 twyp-data.json 與 index.html 在同一目錄。';});
+
+// first-visit guided tour (same pattern as the interlinear-bible tour:
+// overlay + spotlight + tooltip bubble, one title + one or two sentences
+// per step, prev/next/skip, "n / total" progress)
+const TOUR_KEY='twypTourV1';
+const TOUR_STEPS=[
+ {sel:'h1', title:'歡迎', text:'這裡是全臺青年聚會與受浸人數統計，2023–2026 年各年齡層的聚會與受浸數字都在這一頁，公開頁面，不用登入就能看。'},
+ {sel:'#region', title:'地區', text:'先選地區：全台加總、10 個大區，或台北、新北的照顧區。選了之後，整頁就換成那個地方的數字。'},
+ {sel:'#ageRow', title:'年齡層', text:'再選年齡層：由年輕到年長，兒童、青少年、大專、青職。兒童只有主日、家聚會、召會生活三個項目。'},
+ {sel:'#metricRow', title:'項目', text:'選一個項目來看：主日、受浸、家聚會、排聚會。選了之後，圖表和表格都會跟著換。'},
+ {sel:'#rangeRow', title:'時間範圍', text:'選時間範圍：全年、1–X 月，或自訂起訖月。各年都取同一個範圍來比，才比得準。'},
+ {sel:'#chart', title:'折線圖', text:'這條折線是 2023–2026 年的實際數字。灰色虛線是當年的基數或目標，空心點是 2026 年目標，淺色點是 2027 年預估。'},
+ {sel:'#summaryCard', title:'燈號與結報', text:'這張卡片是結論：燈號看趨勢，綠燈向上、紅燈下滑；下面寫著這組數字目前的狀況和建議。'},
+ {sel:'#shot', title:'一鍵截圖', text:'看完想存下來或分享，按這裡就把目前的圖和結論存成一張圖。'}
+];
+let tourSteps=[], tourIdx=0, tourActive=false, tourRaf=false;
+function tourSeen(){ try{ return localStorage.getItem(TOUR_KEY)==='1'; }catch(e){ return false; } }
+function tourMarkSeen(){ try{ localStorage.setItem(TOUR_KEY,'1'); }catch(e){} }
+function tourEl(sel){ const el=document.querySelector(sel); if(!el) return null; const r=el.getBoundingClientRect(); return (r.width>0 && r.height>0) ? el : null; }
+function tourShow(i){
+  tourIdx=i;
+  const st=tourSteps[i], el=tourEl(st.sel);
+  if(!el){ tourEnd(true); return; }
+  el.scrollIntoView({block:'center'});
+  const spot=document.getElementById('tourSpot'), tip=document.getElementById('tourTip');
+  const r=el.getBoundingClientRect(), pad=8;
+  spot.style.left=(r.left-pad)+'px'; spot.style.top=(r.top-pad)+'px';
+  spot.style.width=(r.width+pad*2)+'px'; spot.style.height=(r.height+pad*2)+'px';
+  document.getElementById('tourTitle').textContent=st.title;
+  document.getElementById('tourText').textContent=st.text;
+  document.getElementById('tourProg').textContent=(i+1)+' / '+tourSteps.length;
+  document.getElementById('tourPrev').disabled=(i===0);
+  document.getElementById('tourNext').textContent=(i===tourSteps.length-1)?'完成':'下一步';
+  tip.style.display='block';
+  const tw=tip.offsetWidth, th=tip.offsetHeight;
+  let left=Math.min(Math.max(16, r.left), Math.max(16, window.innerWidth-tw-16));
+  let top=r.bottom+12;
+  if(top+th>window.innerHeight-8) top=Math.max(8, r.top-th-12);
+  tip.style.left=left+'px'; tip.style.top=top+'px';
+}
+function tourStart(manual){
+  tourSteps=TOUR_STEPS.filter(s=>tourEl(s.sel));
+  if(!tourSteps.length) return;
+  tourActive=true;
+  document.getElementById('tourBlock').style.display='block';
+  document.getElementById('tourSpot').style.display='block';
+  tourShow(0);
+}
+function tourEnd(mark){
+  tourActive=false;
+  document.getElementById('tourBlock').style.display='none';
+  document.getElementById('tourSpot').style.display='none';
+  document.getElementById('tourTip').style.display='none';
+  if(mark!==false) tourMarkSeen();
+}
+function tourReposition(){ if(!tourActive || tourRaf) return; tourRaf=true; requestAnimationFrame(()=>{ tourRaf=false; if(tourActive) tourShow(tourIdx); }); }
+document.getElementById('tourNext').onclick=()=>{ if(tourIdx>=tourSteps.length-1) tourEnd(true); else tourShow(tourIdx+1); };
+document.getElementById('tourPrev').onclick=()=>{ if(tourIdx>0) tourShow(tourIdx-1); };
+document.getElementById('tourSkip').onclick=()=>tourEnd(true);
+document.getElementById('tourBtn').onclick=()=>tourStart(true);
+window.addEventListener('scroll', tourReposition, true);
+window.addEventListener('resize', tourReposition);
 </script>
 </body>
 </html>
