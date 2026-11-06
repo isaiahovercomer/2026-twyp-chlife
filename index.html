@@ -39,6 +39,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 #tourPrev{background:transparent;border:1.5px solid #f2c94c;color:#f2c94c}
 #tourPrev:disabled{opacity:.35;cursor:default}
 #tourNext{background:#f2c94c;border:1.5px solid #f2c94c;color:#1e3a52}
+/* Taichung district baptism drill-down */
+#tcBapBtn{display:block;width:100%;text-align:left;background:none;border:0;padding:4px 0;font-size:18px;font-weight:700;color:#1e3a52;cursor:pointer}
+#tcBapBtn .arr{float:right;color:#2f6da3}
+.tcrow{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.tcrow label{font-weight:700;font-size:14px;color:#1e3a52}
+.tcrow select{width:auto;min-width:150px;margin-top:4px}
+#tcChart{width:100%;height:auto;display:block;margin-top:6px}
+.tcleg{display:flex;gap:16px;font-size:13px;color:#5f7d95;margin:2px 0 8px;flex-wrap:wrap}
+.tcleg i{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:5px}
 #shot{background:#2f6da3;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
  .summary{border-left:8px solid #d9a441;background:#fdf3d7}
 .summary.green{border-color:#2e7d4f;background:#d3ecd9}
@@ -82,6 +91,20 @@ strong{color:#1e3a52}
 <div class="shotrow"><button id="shot">一鍵截圖</button></div>
 
 <div class="card summary" id="summaryCard"></div>
+<div class="card" id="tcBapCard" style="display:none">
+<button id="tcBapBtn" type="button">台中各大區受浸（截至 10/31）<span class="arr">▸</span></button>
+<div id="tcPanel" style="display:none">
+<div class="tcrow">
+<label>照顧區<br><select id="tcCare"></select></label>
+<label>大區<br><select id="tcDist"></select></label>
+</div>
+<p class="now" id="tcLine"></p>
+<svg id="tcChart" viewBox="0 0 720 340" role="img" aria-label="台中受浸對比圖"></svg>
+<div class="tcleg"><span><i style="background:#2f6da3"></i>實際青年受浸</span><span><i style="background:#9ab0c3"></i>回報目標</span></div>
+<table id="tcTable" aria-label="台中受浸數字表"></table>
+<p class="small">資料：2026年南／北／西／中各照顧區小區受浸統計（截至10/31）。目標為各大區回報的2026年青年受浸目標；達成率＝青年受浸÷回報目標。全召會達成率27.1%為原表數字（以法理目標837人計）。北、西、中三表右欄表頭另寫11月18日，皆以標題的截至10/31為準。</p>
+</div>
+</div>
 
 <div class="card">
 <table id="yearTable" aria-label="年度數字表"></table>
@@ -450,6 +473,8 @@ function draw(){
   if(curVal(s,2023)!=null && curVal(s,2023)<30) advice+='（基數小於 30 人，燈號僅供參考。）';
   card.className='card summary '+light;
   card.innerHTML='<p><span class="dot"></span><strong>'+lightText+'</strong></p>'+body+'<p><strong>'+advice+'</strong></p><p class="small">燈號判定見下方備註。</p>';
+  // Taichung district baptism panel is only relevant on the Taichung view
+  document.getElementById('tcBapCard').style.display=(region==='台中市召會')?'':'none';
 }
 document.getElementById('shot').onclick=function(){
   const s=series();
@@ -523,6 +548,162 @@ fetch('twyp-data.json').then(r=>r.json()).then(j=>{
   draw();
   setTimeout(()=>{ if(!tourSeen()) tourStart(false); }, 600);
 }).catch(e=>{document.getElementById('nowLine').textContent='資料載入失敗，請確認 twyp-data.json 與 index.html 在同一目錄。';});
+
+// Taichung district baptism, 2026 as of Oct 31 — from the four care-district tables
+// (2026年南／北／西／中各照顧區小區受浸統計). Per district:
+// [法理目標 青少,大專,青職,小計, 回報目標 青少,大專,青職,小計,
+//  實際 青少,大專,青職,青年合計, 達成率(印出), 其他受浸, 受浸小計]
+const TC_BAP=[
+{id:'南一',d:{
+'一':[9,7,14,30,10,8,15,33,2,1,1,4,12.1,10,14],
+'四':[7,11,9,27,7,11,9,27,5,4,2,11,40.7,3,14],
+'三三':[7,6,7,20,7,6,7,20,5,2,0,7,35.0,0,7],
+'二七':[3,10,7,20,10,16,14,40,2,1,1,4,10.0,3,7]}},
+{id:'南二',d:{
+'二':[11,6,10,27,11,6,10,27,2,1,1,4,14.8,0,4],
+'三':[2,10,10,22,2,10,10,22,2,3,1,6,27.3,2,8],
+'十一':[4,10,9,23,4,10,9,23,1,4,0,5,21.7,2,7],
+'三九':[1,10,7,18,1,10,7,18,1,4,2,7,38.9,1,8]}},
+{id:'南三',d:{
+'十七':[3,35,13,51,3,35,13,51,3,18,0,21,41.2,0,21],
+'二三':[8,6,9,23,8,6,9,23,6,1,0,7,30.4,10,17],
+'三四':[7,0,5,12,7,0,5,12,4,0,1,5,41.7,0,5],
+'二四':[9,16,14,39,9,16,14,39,2,8,3,13,33.3,5,18],
+'四十':[3,8,3,14,3,8,3,14,0,0,0,0,0.0,2,2]}},
+{id:'北一',d:{
+'七':[5,2,10,17,6,2,10,18,2,1,6,9,50.0,12,21],
+'二八':[7,2,8,17,7,2,8,17,2,0,0,2,11.8,13,15],
+'十五':[4,1,10,15,4,1,10,15,1,2,2,5,33.3,6,11],
+'二九':[11,1,12,24,11,1,12,24,4,1,3,8,33.3,13,21]}},
+{id:'北二',d:{
+'十八':[13,0,11,24,13,0,11,24,7,0,5,12,50.0,8,20],
+'三二':[2,0,6,8,3,0,6,9,0,0,1,1,11.1,3,4],
+'十九':[1,1,5,7,5,1,5,11,2,0,2,4,36.4,4,8],
+'三一':[6,0,7,13,6,0,7,13,0,0,0,0,0.0,1,1],
+'三八':[0,1,5,6,5,1,5,11,2,0,1,3,27.3,3,6]}},
+{id:'西一',d:{
+'九':[6,6,8,20,6,6,8,20,1,2,2,5,25.0,9,14],
+'十':[3,5,8,16,3,5,8,16,0,0,1,1,6.3,1,2],
+'二六':[5,5,10,20,5,5,10,20,2,1,0,3,15.0,8,11],
+'三七':[6,5,10,21,6,5,10,21,1,2,2,5,23.8,3,8]}},
+{id:'西二',d:{
+'二十':[7,9,13,29,7,9,13,29,3,3,1,7,24.1,5,12],
+'二一':[7,1,8,16,7,1,8,16,5,2,1,8,50.0,4,12],
+'二二':[5,1,8,14,5,1,7,13,1,0,0,1,7.7,7,8],
+'三六':[6,1,5,12,6,1,5,12,1,0,1,2,16.7,2,4]}},
+{id:'中一',d:{
+'五':[4,10,12,26,4,10,12,26,5,5,0,10,38.5,3,13],
+'十三':[4,8,7,19,4,8,7,19,3,0,1,4,21.1,4,8],
+'三五':[1,10,6,17,1,10,6,17,0,3,0,3,17.6,5,8]}},
+{id:'中二',d:{
+'八':[4,17,12,33,4,17,12,33,2,10,1,13,39.4,1,14],
+'十二':[5,6,9,20,5,6,9,20,1,0,1,2,10.0,6,8],
+'十六':[2,2,6,10,2,2,6,10,0,0,0,0,0.0,1,1],
+'二五':[1,5,7,13,2,5,7,14,0,0,0,0,0.0,2,2],
+'四一':[15,2,9,26,15,2,9,26,2,0,0,2,7.7,2,4]}},
+{id:'中三',d:{
+'六':[6,4,13,23,6,4,13,23,2,0,1,3,13.0,1,4],
+'十四':[4,6,8,18,4,6,8,18,5,5,0,10,55.6,2,12],
+'三十':[4,11,12,27,4,11,12,27,2,7,1,10,37.0,24,34]}}
+];
+// 全召會 row as printed (rate 27.1% is vs 法理目標 837, unlike the district rows)
+const TC_TOTAL={legal:[218,257,362,837],target:[238,264,369,871],actual:[91,91,45,227],rate:27.1,other:191,total:418};
+function tcRowObj(name,v){return {name:name,legal:v.slice(0,4),target:v.slice(4,8),actual:v.slice(8,12),rate:v[12],other:v[13],total:v[14]};}
+function tcSumRows(name,rows){
+  const s=(f)=>rows.reduce((a,r)=>a+f(r),0);
+  const sum4=(get)=>[0,1,2,3].map(i=>s(r=>get(r)[i]));
+  const target=sum4(r=>r.target), actual=sum4(r=>r.actual);
+  return {name:name,legal:sum4(r=>r.legal),target:target,actual:actual,rate:target[3]?+(actual[3]/target[3]*100).toFixed(1):0,other:s(r=>r.other),total:s(r=>r.total)};
+}
+function tcCareRows(id){ const c=TC_BAP.find(x=>x.id===id); return Object.keys(c.d).map(n=>tcRowObj(n,c.d[n])); }
+function tcAllDistricts(){ const out=[]; TC_BAP.forEach(c=>{ Object.keys(c.d).forEach(n=>out.push({care:c.id,row:tcRowObj(n,c.d[n])})); }); return out; }
+let tcOpen=false, tcCare='全召會', tcDist='全部';
+function tcFillCare(){
+  const sel=document.getElementById('tcCare'); sel.innerHTML='';
+  const mk=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o);};
+  mk('全召會','全召會');
+  TC_BAP.forEach(c=>mk(c.id,c.id+'照顧區'));
+  sel.value=tcCare;
+}
+function tcFillDist(){
+  const sel=document.getElementById('tcDist'); sel.innerHTML='';
+  const mk=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o);};
+  mk('全部','全部');
+  if(tcCare==='全召會'){ tcAllDistricts().forEach(x=>mk(x.row.name, x.row.name+'大區（'+x.care+'）')); }
+  else { tcCareRows(tcCare).forEach(r=>mk(r.name, r.name+'大區')); }
+  sel.value=tcDist;
+}
+function tcRate(a,t){ return t? (a/t*100).toFixed(1)+'%' : '—'; }
+function tcDraw(){
+  const line=document.getElementById('tcLine'), svg=document.getElementById('tcChart'), tbl=document.getElementById('tcTable');
+  let mode, units, tableRows, totalRow, title;
+  if(tcDist!=='全部'){
+    const hit=tcAllDistricts().find(x=>x.row.name===tcDist);
+    const r=hit.row; mode='age'; title=tcDist+'大區（'+hit.care+'照顧區）';
+    units=[{name:'青少年',a:r.actual[0],t:r.target[0]},{name:'大專',a:r.actual[1],t:r.target[1]},{name:'青職',a:r.actual[2],t:r.target[2]}];
+    totalRow=r; tableRows=null;
+    line.textContent=title+'｜青年受浸 '+r.actual[3]+' 人／回報目標 '+r.target[3]+' 人，達成率 '+r.rate.toFixed(1)+'%｜受浸小計 '+r.total+' 人（其他 '+r.other+' 人）｜法理目標 '+r.legal[3]+' 人';
+  } else if(tcCare!=='全召會'){
+    mode='units'; title=tcCare+'照顧區';
+    const rows=tcCareRows(tcCare);
+    units=rows.map(r=>({name:r.name+'大區',a:r.actual[3],t:r.target[3]}));
+    totalRow=tcSumRows(tcCare+'照顧區小計',rows); tableRows=rows;
+    line.textContent=title+'｜青年受浸 '+totalRow.actual[3]+' 人／回報目標 '+totalRow.target[3]+' 人，達成率 '+totalRow.rate.toFixed(1)+'%｜受浸小計 '+totalRow.total+' 人（其他 '+totalRow.other+' 人）';
+  } else {
+    mode='units'; title='全召會';
+    const rows=TC_BAP.map(c=>tcSumRows(c.id+'照顧區',tcCareRows(c.id)));
+    units=rows.map(r=>({name:r.name.replace('照顧區',''),a:r.actual[3],t:r.target[3]}));
+    totalRow={name:'全召會',legal:TC_TOTAL.legal,target:TC_TOTAL.target,actual:TC_TOTAL.actual,rate:TC_TOTAL.rate,other:TC_TOTAL.other,total:TC_TOTAL.total};
+    tableRows=rows;
+    line.textContent='全召會｜青年受浸 '+totalRow.actual[3]+' 人／回報目標 '+totalRow.target[3]+' 人，達成率 '+totalRow.rate.toFixed(1)+'%（原表數字）｜受浸小計 '+totalRow.total+' 人（其他 '+totalRow.other+' 人）';
+  }
+  // chart: actual (solid) vs reported target (dashed) across the units
+  const W=720,H=340,L=44,R=16,T=18,B=34, iw=W-L-R, ih=H-T-B;
+  const mx=Math.max.apply(null, units.map(u=>Math.max(u.a,u.t)));
+  const ymax=mx<=0?10:Math.ceil(mx*1.15/5)*5;
+  const X=i=>L+iw*(units.length===1?0.5:i/(units.length-1));
+  const Y=v=>T+ih*(1-v/ymax);
+  let h='<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(T+ih)+'" stroke="#dbe9f3"/>';
+  h+='<line x1="'+L+'" y1="'+(T+ih)+'" x2="'+(L+iw)+'" y2="'+(T+ih)+'" stroke="#dbe9f3"/>';
+  [0,ymax/2,ymax].forEach(v=>{ h+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(L+iw)+'" y2="'+Y(v)+'" stroke="#dbe9f3"/><text x="'+(L-6)+'" y="'+(Y(v)+4)+'" font-size="12" fill="#5f7d95" text-anchor="end">'+Math.round(v)+'</text>'; });
+  units.forEach((u,i)=>{ h+='<text x="'+X(i)+'" y="'+(T+ih+20)+'" font-size="13" fill="#1e3a52" text-anchor="middle">'+u.name+'</text>'; });
+  const pts=(get)=>units.map((u,i)=>X(i)+','+Y(get(u))).join(' ');
+  h+='<polyline points="'+pts(u=>u.t)+'" fill="none" stroke="#9ab0c3" stroke-width="2.5" stroke-dasharray="6 4"/>';
+  h+='<polyline points="'+pts(u=>u.a)+'" fill="none" stroke="#2f6da3" stroke-width="3"/>';
+  units.forEach((u,i)=>{
+    h+='<circle cx="'+X(i)+'" cy="'+Y(u.t)+'" r="5" fill="#fff" stroke="#9ab0c3" stroke-width="2"/>';
+    h+='<circle cx="'+X(i)+'" cy="'+Y(u.a)+'" r="6" fill="#2f6da3"/>';
+    h+='<text x="'+X(i)+'" y="'+(Y(u.a)-12)+'" font-size="13" font-weight="700" fill="#1e3a52" text-anchor="middle">'+u.a+'</text>';
+    h+='<text x="'+X(i)+'" y="'+(Y(u.t)+18)+'" font-size="12" fill="#5f7d95" text-anchor="middle">'+u.t+'</text>';
+  });
+  svg.innerHTML=h;
+  // table
+  if(mode==='age'){
+    let th='<tr><th>年齡層</th><th>實際</th><th>目標</th><th>達成率</th></tr>';
+    let rows='';
+    units.forEach(u=>{ rows+='<tr><td>'+u.name+'</td><td class="num">'+u.a+'</td><td class="num">'+u.t+'</td><td class="num">'+tcRate(u.a,u.t)+'</td></tr>'; });
+    rows+='<tr><td><b>青年合計</b></td><td class="num"><b>'+totalRow.actual[3]+'</b></td><td class="num"><b>'+totalRow.target[3]+'</b></td><td class="num"><b>'+totalRow.rate.toFixed(1)+'%</b></td></tr>';
+    tbl.innerHTML=th+rows;
+  } else {
+    let th='<tr><th>單位</th><th>青少</th><th>大專</th><th>青職</th><th>青年合計</th><th>目標</th><th>達成率</th><th>其他</th><th>受浸小計</th></tr>';
+    let rows='';
+    tableRows.forEach(r=>{
+      const disp=(tcCare!=='全召會') ? r.name+'大區' : r.name;
+      rows+='<tr><td>'+disp+'</td><td class="num">'+r.actual[0]+'</td><td class="num">'+r.actual[1]+'</td><td class="num">'+r.actual[2]+'</td><td class="num">'+r.actual[3]+'</td><td class="num">'+r.target[3]+'</td><td class="num">'+r.rate.toFixed(1)+'%</td><td class="num">'+r.other+'</td><td class="num">'+r.total+'</td></tr>';
+    });
+    rows+='<tr><td><b>'+totalRow.name+'</b></td><td class="num"><b>'+totalRow.actual[0]+'</b></td><td class="num"><b>'+totalRow.actual[1]+'</b></td><td class="num"><b>'+totalRow.actual[2]+'</b></td><td class="num"><b>'+totalRow.actual[3]+'</b></td><td class="num"><b>'+totalRow.target[3]+'</b></td><td class="num"><b>'+totalRow.rate.toFixed(1)+'%</b></td><td class="num"><b>'+totalRow.other+'</b></td><td class="num"><b>'+totalRow.total+'</b></td></tr>';
+    tbl.innerHTML=th+rows;
+  }
+}
+tcFillCare(); tcFillDist();
+document.getElementById('tcCare').onchange=()=>{ tcCare=document.getElementById('tcCare').value; tcDist='全部'; tcFillDist(); tcDraw(); };
+document.getElementById('tcDist').onchange=()=>{ tcDist=document.getElementById('tcDist').value; tcDraw(); };
+document.getElementById('tcBapBtn').onclick=()=>{
+  tcOpen=!tcOpen;
+  document.getElementById('tcPanel').style.display=tcOpen?'':'none';
+  document.querySelector('#tcBapBtn .arr').textContent=tcOpen?'▾':'▸';
+  if(tcOpen) tcDraw();
+};
 
 // first-visit guided tour (same pattern as the interlinear-bible tour:
 // overlay + spotlight + tooltip bubble, one title + one or two sentences
