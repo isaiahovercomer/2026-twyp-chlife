@@ -47,7 +47,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .tcrow select{width:auto;min-width:150px;margin-top:4px}
 #tcChart{width:100%;height:auto;display:block;margin-top:6px}
 .tcleg{display:flex;gap:16px;font-size:13px;color:#5f7d95;margin:2px 0 8px;flex-wrap:wrap}
-.tcleg i{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:5px}
+.tcleg i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+.tcscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:560px){
+  #tcTable{font-size:12px}
+  #tcTable th,#tcTable td{padding:5px 3px}
+  #tcTable .tcage{display:none}
+}
 #shot{background:#2f6da3;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
  .summary{border-left:8px solid #d9a441;background:#fdf3d7}
 .summary.green{border-color:#2e7d4f;background:#d3ecd9}
@@ -92,16 +98,16 @@ strong{color:#1e3a52}
 
 <div class="card summary" id="summaryCard"></div>
 <div class="card" id="tcBapCard" style="display:none">
-<button id="tcBapBtn" type="button">台中各大區受浸（截至 10/31）<span class="arr">▸</span></button>
+<button id="tcBapBtn" type="button">台中2026年各大區受浸人數<span class="arr">▸</span></button>
 <div id="tcPanel" style="display:none">
 <div class="tcrow">
 <label>照顧區<br><select id="tcCare"></select></label>
 <label>大區<br><select id="tcDist"></select></label>
 </div>
 <p class="now" id="tcLine"></p>
-<svg id="tcChart" viewBox="0 0 720 340" role="img" aria-label="台中受浸對比圖"></svg>
-<div class="tcleg"><span><i style="background:#2f6da3"></i>實際青年受浸</span><span><i style="background:#9ab0c3"></i>回報目標</span></div>
-<table id="tcTable" aria-label="台中受浸數字表"></table>
+<svg id="tcChart" viewBox="0 0 720 340" role="img" aria-label="台中2026年各大區受浸人數對比圖"></svg>
+<div class="tcleg"><span><i style="background:#2f6da3"></i>實際青年受浸</span><span><i style="background:#b9c9d8"></i>回報目標</span></div>
+<div class="tcscroll"><table id="tcTable" aria-label="台中2026年各大區受浸人數表"></table></div>
 <p class="small">資料：2026年南／北／西／中各照顧區小區受浸統計（截至10/31）。目標為各大區回報的2026年青年受浸目標；達成率一律＝青年受浸÷回報目標（全召會 227÷871＝26.1%；原表印 27.1%，是以法理目標 837 人計）。北、西、中三表右欄表頭另寫11月18日，皆以標題的截至10/31為準。</p>
 </div>
 </div>
@@ -668,14 +674,15 @@ function tcDraw(){
   h+='<line x1="'+L+'" y1="'+(T+ih)+'" x2="'+(L+iw)+'" y2="'+(T+ih)+'" stroke="#dbe9f3"/>';
   [0,ymax/2,ymax].forEach(v=>{ h+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(L+iw)+'" y2="'+Y(v)+'" stroke="#dbe9f3"/><text x="'+(L-6)+'" y="'+(Y(v)+4)+'" font-size="12" fill="#5f7d95" text-anchor="end">'+Math.round(v)+'</text>'; });
   units.forEach((u,i)=>{ h+='<text x="'+X(i)+'" y="'+(T+ih+20)+'" font-size="13" fill="#1e3a52" text-anchor="middle">'+u.name+'</text>'; });
-  const pts=(get)=>units.map((u,i)=>X(i)+','+Y(get(u))).join(' ');
-  h+='<polyline points="'+pts(u=>u.t)+'" fill="none" stroke="#9ab0c3" stroke-width="2.5" stroke-dasharray="6 4"/>';
-  h+='<polyline points="'+pts(u=>u.a)+'" fill="none" stroke="#2f6da3" stroke-width="3"/>';
+  // chart: grouped bars (actual solid vs reported target grey) per unit —
+  // the units are independent categories, not a time series
+  const gw=iw/units.length, bw=Math.min(34, gw*0.36), gap=4;
   units.forEach((u,i)=>{
-    h+='<circle cx="'+X(i)+'" cy="'+Y(u.t)+'" r="5" fill="#fff" stroke="#9ab0c3" stroke-width="2"/>';
-    h+='<circle cx="'+X(i)+'" cy="'+Y(u.a)+'" r="6" fill="#2f6da3"/>';
-    h+='<text x="'+X(i)+'" y="'+(Y(u.a)-12)+'" font-size="13" font-weight="700" fill="#1e3a52" text-anchor="middle">'+u.a+'</text>';
-    h+='<text x="'+X(i)+'" y="'+(Y(u.t)+18)+'" font-size="12" fill="#5f7d95" text-anchor="middle">'+u.t+'</text>';
+    const cx=L+gw*i+gw/2, ax=cx-bw-gap/2, tx=cx+gap/2;
+    h+='<rect x="'+tx.toFixed(1)+'" y="'+Y(u.t)+'" width="'+bw+'" height="'+(T+ih-Y(u.t))+'" fill="#b9c9d8"/>';
+    h+='<rect x="'+ax.toFixed(1)+'" y="'+Y(u.a)+'" width="'+bw+'" height="'+(T+ih-Y(u.a))+'" fill="#2f6da3"/>';
+    h+='<text x="'+(ax+bw/2).toFixed(1)+'" y="'+(Y(u.a)-6)+'" font-size="13" font-weight="700" fill="#1e3a52" text-anchor="middle">'+u.a+'</text>';
+    h+='<text x="'+(tx+bw/2).toFixed(1)+'" y="'+(Y(u.t)-6)+'" font-size="12" fill="#5f7d95" text-anchor="middle">'+u.t+'</text>';
   });
   svg.innerHTML=h;
   // table
@@ -686,13 +693,13 @@ function tcDraw(){
     rows+='<tr><td><b>青年合計</b></td><td class="num"><b>'+totalRow.actual[3]+'</b></td><td class="num"><b>'+totalRow.target[3]+'</b></td><td class="num"><b>'+totalRow.rate.toFixed(1)+'%</b></td></tr>';
     tbl.innerHTML=th+rows;
   } else {
-    let th='<tr><th>單位</th><th>青少</th><th>大專</th><th>青職</th><th>青年合計</th><th>目標</th><th>達成率</th><th>其他</th><th>受浸小計</th></tr>';
+    let th='<tr><th>單位</th><th class="tcage">青少</th><th class="tcage">大專</th><th class="tcage">青職</th><th>青年合計</th><th>目標</th><th>達成率</th><th>其他</th><th>受浸小計</th></tr>';
     let rows='';
     tableRows.forEach(r=>{
       const disp=(tcCare!=='全召會') ? r.name+'大區' : r.name;
-      rows+='<tr><td>'+disp+'</td><td class="num">'+r.actual[0]+'</td><td class="num">'+r.actual[1]+'</td><td class="num">'+r.actual[2]+'</td><td class="num">'+r.actual[3]+'</td><td class="num">'+r.target[3]+'</td><td class="num">'+r.rate.toFixed(1)+'%</td><td class="num">'+r.other+'</td><td class="num">'+r.total+'</td></tr>';
+      rows+='<tr><td>'+disp+'</td><td class="num tcage">'+r.actual[0]+'</td><td class="num tcage">'+r.actual[1]+'</td><td class="num tcage">'+r.actual[2]+'</td><td class="num">'+r.actual[3]+'</td><td class="num">'+r.target[3]+'</td><td class="num">'+r.rate.toFixed(1)+'%</td><td class="num">'+r.other+'</td><td class="num">'+r.total+'</td></tr>';
     });
-    rows+='<tr><td><b>'+totalRow.name+'</b></td><td class="num"><b>'+totalRow.actual[0]+'</b></td><td class="num"><b>'+totalRow.actual[1]+'</b></td><td class="num"><b>'+totalRow.actual[2]+'</b></td><td class="num"><b>'+totalRow.actual[3]+'</b></td><td class="num"><b>'+totalRow.target[3]+'</b></td><td class="num"><b>'+totalRow.rate.toFixed(1)+'%</b></td><td class="num"><b>'+totalRow.other+'</b></td><td class="num"><b>'+totalRow.total+'</b></td></tr>';
+    rows+='<tr><td><b>'+totalRow.name+'</b></td><td class="num tcage"><b>'+totalRow.actual[0]+'</b></td><td class="num tcage"><b>'+totalRow.actual[1]+'</b></td><td class="num tcage"><b>'+totalRow.actual[2]+'</b></td><td class="num"><b>'+totalRow.actual[3]+'</b></td><td class="num"><b>'+totalRow.target[3]+'</b></td><td class="num"><b>'+totalRow.rate.toFixed(1)+'%</b></td><td class="num"><b>'+totalRow.other+'</b></td><td class="num"><b>'+totalRow.total+'</b></td></tr>';
     tbl.innerHTML=th+rows;
   }
 }
