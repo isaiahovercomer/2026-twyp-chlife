@@ -102,7 +102,7 @@ strong{color:#1e3a52}
 <svg id="tcChart" viewBox="0 0 720 340" role="img" aria-label="台中受浸對比圖"></svg>
 <div class="tcleg"><span><i style="background:#2f6da3"></i>實際青年受浸</span><span><i style="background:#9ab0c3"></i>回報目標</span></div>
 <table id="tcTable" aria-label="台中受浸數字表"></table>
-<p class="small">資料：2026年南／北／西／中各照顧區小區受浸統計（截至10/31）。目標為各大區回報的2026年青年受浸目標；達成率＝青年受浸÷回報目標。全召會達成率27.1%為原表數字（以法理目標837人計）。北、西、中三表右欄表頭另寫11月18日，皆以標題的截至10/31為準。</p>
+<p class="small">資料：2026年南／北／西／中各照顧區小區受浸統計（截至10/31）。目標為各大區回報的2026年青年受浸目標；達成率一律＝青年受浸÷回報目標（全召會 227÷871＝26.1%；原表印 27.1%，是以法理目標 837 人計）。北、西、中三表右欄表頭另寫11月18日，皆以標題的截至10/31為準。</p>
 </div>
 </div>
 
@@ -606,8 +606,9 @@ const TC_BAP=[
 '十四':[4,6,8,18,4,6,8,18,5,5,0,10,55.6,2,12],
 '三十':[4,11,12,27,4,11,12,27,2,7,1,10,37.0,24,34]}}
 ];
-// 全召會 row as printed (rate 27.1% is vs 法理目標 837, unlike the district rows)
-const TC_TOTAL={legal:[218,257,362,837],target:[238,264,369,871],actual:[91,91,45,227],rate:27.1,other:191,total:418};
+// 全召會 row as printed, except the rate: unified to 227÷回報目標 871＝26.1%
+// (source printed 27.1%, vs 法理目標 837)
+const TC_TOTAL={legal:[218,257,362,837],target:[238,264,369,871],actual:[91,91,45,227],rate:26.1,other:191,total:418};
 function tcRowObj(name,v){return {name:name,legal:v.slice(0,4),target:v.slice(4,8),actual:v.slice(8,12),rate:v[12],other:v[13],total:v[14]};}
 function tcSumRows(name,rows){
   const s=(f)=>rows.reduce((a,r)=>a+f(r),0);
@@ -655,7 +656,7 @@ function tcDraw(){
     units=rows.map(r=>({name:r.name.replace('照顧區',''),a:r.actual[3],t:r.target[3]}));
     totalRow={name:'全召會',legal:TC_TOTAL.legal,target:TC_TOTAL.target,actual:TC_TOTAL.actual,rate:TC_TOTAL.rate,other:TC_TOTAL.other,total:TC_TOTAL.total};
     tableRows=rows;
-    line.textContent='全召會｜青年受浸 '+totalRow.actual[3]+' 人／回報目標 '+totalRow.target[3]+' 人，達成率 '+totalRow.rate.toFixed(1)+'%（原表數字）｜受浸小計 '+totalRow.total+' 人（其他 '+totalRow.other+' 人）';
+    line.textContent='全召會｜青年受浸 '+totalRow.actual[3]+' 人／回報目標 '+totalRow.target[3]+' 人，達成率 '+totalRow.rate.toFixed(1)+'%｜受浸小計 '+totalRow.total+' 人（其他 '+totalRow.other+' 人）';
   }
   // chart: actual (solid) vs reported target (dashed) across the units
   const W=720,H=340,L=44,R=16,T=18,B=34, iw=W-L-R, ih=H-T-B;
