@@ -306,7 +306,7 @@ function draw(){
   // grid + y labels (3 ticks)
   [mn,(mn+mx)/2,mx].forEach(v=>{const y=Y(v); html+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#dbe9f3"/><text x="'+(L-8)+'" y="'+(y+4)+'" font-size="13" text-anchor="end" fill="#5f7d95">'+Math.round(v)+'</text>';});
   YEARS.forEach((y,i)=>{html+='<text x="'+X(i)+'" y="'+(H-18)+'" font-size="14" text-anchor="middle" fill="#1e3a52">'+y+(y===2026 && !isYtd()?'（至43週）':'')+'</text>';});
-  if(chartPts.some(p=>p.y===2027 && p.v!=null)) html+='<text x="'+X(4)+'" y="'+(H-18)+'" font-size="13" text-anchor="middle" fill="#7a9ab5">2027（預估）</text>';
+  if(chartPts.some(p=>p.y===2027 && p.v!=null)) html+='<text x="'+X(4)+'" y="'+(H-18)+'" font-size="13" text-anchor="end" fill="#7a9ab5">2027（預估）</text>';
   const avail=chartPts.filter(p=>p.v!=null);
   const actual=avail.filter(p=>p.y!==2027);
   if(actual.length>=2){
@@ -673,7 +673,7 @@ function tcDraw(){
   let h='<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(T+ih)+'" stroke="#dbe9f3"/>';
   h+='<line x1="'+L+'" y1="'+(T+ih)+'" x2="'+(L+iw)+'" y2="'+(T+ih)+'" stroke="#dbe9f3"/>';
   [0,ymax/2,ymax].forEach(v=>{ h+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+(L+iw)+'" y2="'+Y(v)+'" stroke="#dbe9f3"/><text x="'+(L-6)+'" y="'+(Y(v)+4)+'" font-size="12" fill="#5f7d95" text-anchor="end">'+Math.round(v)+'</text>'; });
-  units.forEach((u,i)=>{ h+='<text x="'+X(i)+'" y="'+(T+ih+20)+'" font-size="13" fill="#1e3a52" text-anchor="middle">'+u.name+'</text>'; });
+  units.forEach((u,i)=>{ const anchor=i===0?'start':(i===units.length-1?'end':'middle'); h+='<text x="'+X(i)+'" y="'+(T+ih+20)+'" font-size="13" fill="#1e3a52" text-anchor="'+anchor+'">'+u.name+'</text>'; });
   // chart: grouped bars (actual solid vs reported target grey) per unit —
   // the units are independent categories, not a time series
   const gw=iw/units.length, bw=Math.min(34, gw*0.36), gap=4;
