@@ -480,8 +480,8 @@ function draw(){
   if(curVal(s,2023)!=null && curVal(s,2023)<30) advice+='（基數小於 30 人，燈號僅供參考。）';
   card.className='card summary '+light;
   card.innerHTML='<p><span class="dot"></span><strong>'+lightText+'</strong></p>'+body+'<p><strong>'+advice+'</strong></p><p class="small">燈號判定見下方備註。</p>';
-  // Taichung district baptism panel is only relevant on the Taichung view
-  document.getElementById('tcBapCard').style.display=(region==='台中市召會')?'':'none';
+  // Taichung district baptism panel is only relevant on the Taichung view with the baptism metric
+  document.getElementById('tcBapCard').style.display=(region==='台中市召會' && metric==='baptism')?'':'none';
 }
 document.getElementById('shot').onclick=function(){
   const s=series();
