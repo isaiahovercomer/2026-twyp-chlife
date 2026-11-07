@@ -108,6 +108,7 @@ strong{color:#1e3a52}
 <svg id="tcChart" viewBox="0 0 720 340" role="img" aria-label="台中2026年各大區受浸人數對比圖"></svg>
 <div class="tcleg"><span><i style="background:#2f6da3"></i>實際青年受浸</span><span><i style="background:#b9c9d8"></i>回報目標</span></div>
 <div class="tcscroll"><table id="tcTable" aria-label="台中2026年各大區受浸人數表"></table></div>
+<div class="card summary" id="tcSumCard" style="margin:12px 0 4px"></div>
 <p class="small">資料：2026年南／北／西／中各照顧區小區受浸統計（截至10/31）。目標為各大區回報的2026年青年受浸目標；達成率一律＝青年受浸÷回報目標（全召會 227÷871＝26.1%；原表印 27.1%，是以法理目標 837 人計）。北、西、中三表右欄表頭另寫11月18日，皆以標題的截至10/31為準。</p>
 </div>
 </div>
@@ -702,6 +703,25 @@ function tcDraw(){
     rows+='<tr><td><b>'+totalRow.name+'</b></td><td class="num tcage"><b>'+totalRow.actual[0]+'</b></td><td class="num tcage"><b>'+totalRow.actual[1]+'</b></td><td class="num tcage"><b>'+totalRow.actual[2]+'</b></td><td class="num"><b>'+totalRow.actual[3]+'</b></td><td class="num"><b>'+totalRow.target[3]+'</b></td><td class="num"><b>'+totalRow.rate.toFixed(1)+'%</b></td><td class="num"><b>'+totalRow.other+'</b></td><td class="num"><b>'+totalRow.total+'</b></td></tr>';
     tbl.innerHTML=th+rows;
   }
+  // summary light card (below the table): light by achievement rate
+  const sc=document.getElementById('tcSumCard');
+  const rate=totalRow.rate, avg=TC_TOTAL.rate;
+  const light= rate>=35 ? 'green' : (rate>=25 ? 'yellow' : 'red');
+  const lightText= light==='green' ? '綠燈：達成率領先' : (light==='yellow' ? '黃燈：宜持續追趕' : '紅燈：宜加緊追趕');
+  let cmp='';
+  if(mode==='age' || tcCare!=='全召會'){
+    cmp= rate>avg ? '高於全召會平均 '+avg.toFixed(1)+'%' : (rate<avg ? '低於全召會平均 '+avg.toFixed(1)+'%' : '與全召會平均 '+avg.toFixed(1)+'% 相同');
+  }
+  let body;
+  if(mode==='age'){
+    body=title+'青年受浸 '+totalRow.actual[3]+' 人（青少 '+totalRow.actual[0]+'、大專 '+totalRow.actual[1]+'、青職 '+totalRow.actual[2]+'），回報目標 '+totalRow.target[3]+' 人，達成率 '+rate.toFixed(1)+'%'+(cmp?'，'+cmp:'')+'。受浸小計 '+totalRow.total+' 人（其他 '+totalRow.other+' 人）。';
+  } else {
+    body=title+'青年受浸 '+totalRow.actual[3]+' 人，回報目標 '+totalRow.target[3]+' 人，達成率 '+rate.toFixed(1)+'%'+(cmp?'，'+cmp:'')+'。受浸小計 '+totalRow.total+' 人（其他 '+totalRow.other+' 人）。';
+  }
+  body+='截至 10/31，尚有 11–12 月可追趕。';
+  const advice= light==='green' ? '達成率領先，宜持續保持。' : (light==='yellow' ? '達成率接近平均，宜留意後續追趕。' : '達成率偏低，宜優先加強福音出訪與新人牧養跟進。');
+  sc.className='card summary '+light;
+  sc.innerHTML='<p><span class="dot"></span><strong>'+lightText+'</strong></p><p>'+body+'</p><p><strong>'+advice+'</strong></p><p class="small">燈號：達成率 ≥35% 綠、25–35% 黃、&lt;25% 紅；達成率＝青年受浸÷回報目標（截至10/31）。</p>';
 }
 tcFillCare(); tcFillDist();
 document.getElementById('tcCare').onchange=()=>{ tcCare=document.getElementById('tcCare').value; tcDist='全部'; tcFillDist(); tcDraw(); };
